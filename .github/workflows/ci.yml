@@ -1,11 +1,10 @@
 name: CI
 
-# Runs on every pull request and on pushes to any branch. It never touches AWS:
+# Runs on every pull request and on every push. It never touches AWS:
 # pull requests (including ones from forks) must not receive the deploy role.
 on:
   pull_request:
   push:
-    branches-ignore: [main]
 
 permissions:
   contents: read

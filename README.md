@@ -46,7 +46,7 @@ The deploy goes to a **member sandbox account**, not the management account.
 
 Two GitHub Actions workflows:
 
-- **CI** (`.github/workflows/ci.yml`) runs on pull requests and on pushes to branches other than `main`. It compiles, runs the tests, and synthesizes the template. It uses no AWS credentials, so untrusted pull requests never reach the deploy role.
+- **CI** (`.github/workflows/ci.yml`) runs on every pull request and every push. It compiles, runs the tests, and synthesizes the template. It uses no AWS credentials, so untrusted pull requests never reach the deploy role.
 - **Deploy** (`.github/workflows/deploy.yml`) runs on pushes to `main` and on manual dispatch. It assumes the OIDC role, deploys to the `sandbox` environment, and checks the live endpoint.
 
 ## Deploy
