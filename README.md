@@ -4,7 +4,7 @@ A minimal AWS CDK v2 app. One Lambda function sits behind a public HTTPS endpoin
 
 ```
 GET https://<api-id>.execute-api.us-east-1.amazonaws.com/
-→ {"message":"Hello, World!","timestamp":"..."}
+→ {"message":"Hello from CDK v2!"}
 ```
 
 ## Project structure

@@ -41,7 +41,6 @@ describe('handler', () => {
     const result = await handler({} as never);
     expect(result).toMatchObject({ statusCode: 200 });
     const body = JSON.parse((result as { body: string }).body);
-    expect(body.message).toBe(MESSAGE);
-    expect(typeof body.timestamp).toBe('string');
+    expect(body).toEqual({ message: MESSAGE });
   });
 });
