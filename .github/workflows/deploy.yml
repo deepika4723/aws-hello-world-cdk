@@ -1,0 +1,70 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # Required for AWS OIDC authentication
+
+concurrency:
+  group: deploy-hello-world
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to sandbox account
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Configure the "sandbox" environment in GitHub with required reviewers.
+    environment: sandbox
+    env:
+      AWS_REGION: us-east-1
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Compile TypeScript
+        run: npm run build
+
+      - name: Run unit tests
+        run: npm test -- --ci
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          role-session-name: github-deploy-${{ github.run_id }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Show changes
+        run: npx cdk diff
+
+      - name: Deploy
+        run: npx cdk deploy --require-approval never --outputs-file cdk-outputs.json
+
+      - name: Verify public endpoint returns the current message
+        run: |
+          API_URL=$(jq -r '.HelloWorldStack.ApiUrl' cdk-outputs.json)
+          EXPECTED=$(node -p "require('./dist/src/handler.js').MESSAGE")
+          echo "Endpoint: $API_URL"
+          for attempt in 1 2 3 4 5; do
+            ACTUAL=$(curl -s "$API_URL" | jq -r '.message' || true)
+            if [ "$ACTUAL" = "$EXPECTED" ]; then
+              echo "Verified: endpoint returned \"$ACTUAL\""
+              exit 0
+            fi
+            echo "Attempt $attempt: got \"$ACTUAL\", expected \"$EXPECTED\". Retrying in 5s."
+            sleep 5
+          done
+          echo "Endpoint did not return the expected message"
+          exit 1
